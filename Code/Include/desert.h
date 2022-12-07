@@ -2,13 +2,20 @@
 
 #include "basics.h"
 
+const float M_PI = 3.14159265358979323846f;
+// Degrees to radians
+static float ToRadians(float degrees)
+{
+	return degrees * M_PI / 180.0f;
+}
 class DuneSediment
 {
 private:
-	float tanThresholdAngleSediment = 0.60f;		// ~33°
-	float tanThresholdAngleWindShadowMin = 0.08f;	// ~5°
-	float tanThresholdAngleWindShadowMax = 0.26f;	// ~15°
-	float tanThresholdAngleBedrock = 2.5f;			// ~68°
+	// 33 Degrees in radians
+	float tanThresholdAngleSediment = ToRadians(33.0f);		// ~33
+	float tanThresholdAngleWindShadowMin = ToRadians(10.0f);	// ~5
+	float tanThresholdAngleWindShadowMax = ToRadians(15.0f);	// ~15
+	float tanThresholdAngleBedrock = ToRadians(68.0f);		// ~68
 
 	bool vegetationOn = false;
 	bool abrasionOn = false;

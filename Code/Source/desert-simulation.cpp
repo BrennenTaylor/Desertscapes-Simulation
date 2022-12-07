@@ -208,22 +208,30 @@ void DuneSediment::PerformReptationOnCell(int i, int j, int bounce)
 */
 void DuneSediment::ComputeWindAtCell(int i, int j, Vector2& windDir) const
 {
-	// Base wind direction
-	windDir = wind;
+	// Get altitude of the sand at current cell
+	const float sandHeight = sediments.Get(i, j);
+	windDir = (1.0f + (0.005f * sandHeight)) * wind; 
+
+	// If no wind
+	if (windDir.x < 0.001f && windDir.y < 0.001f)
+		return;
 
 	// Modulate wind strength with sediment layer: increase velocity on slope in the direction of the wind
 	Vector2 g = sediments.Gradient(i, j);
-	float similarity = 0.0f;
+	Vector2 orthogonalVec = Vector2(-g.y, g.x);
 	float slope = 0.0f;
+	// If the gradient is not 0 and the wind direction is not 0
 	if (g != Vector2(0.0f) && windDir != Vector2(0.0f))
 	{
-		similarity = Math::Clamp(Dot(Normalize(g), Normalize(windDir)));
 		slope = Math::Clamp(Magnitude(g));
+		// Flip orthogonalVec when not in direction of V
+		if (Dot(g, orthogonalVec)) {
+			orthogonalVec = -orthogonalVec;
+		}
 	}
 
-	// Wind velocity is doubled in the best case
-	float t = (similarity + slope) / 2.0f;
-	windDir = Math::Lerp(windDir, 2.0f * windDir, t);
+	// Implement change in wind direction mentioned in the paper
+	windDir = Math::Lerp(windDir, 5.0f * orthogonalVec, slope);
 }
 
 /*!
@@ -265,7 +273,7 @@ void DuneSediment::PerformAbrasionOnCell(int i, int j, const Vector2& windDir)
 
 /*!
 \brief Check if a given grid vertex is in the wind shadow.
-Use the threshold angle described in geomorphology papers, ie. ~[5, 15]°.
+Use the threshold angle described in geomorphology papers, ie. ~[5, 15]ï¿½.
 \param i x coordinate
 \param j y coordinate
 \param unitWindDir unit wind direction.
@@ -274,10 +282,12 @@ Use the threshold angle described in geomorphology papers, ie. ~[5, 15]°.
 float DuneSediment::IsInShadow(int i, int j, const Vector2& windDir) const
 {
 	const float windStepLength = 1.0;
-	const Vector2 windStep = Vector2(
-		windDir[0] > 0.0f ? windStepLength : windDir[0] < 0.0f ? -windStepLength : 0.0f,
-		windDir[1] > 0.0f ? windStepLength : windDir[1] < 0.0f ? -windStepLength : 0.0f
-	);
+
+	// Brennen: Add check to exit early no wind, thus no shadow
+	if (Magnitude(windDir) < 0.001f)
+		return 0.0f;
+
+	const Vector2 windStep = 0.5f * Normalize(windDir);
 	Vector2 p = bedrock.ArrayVertex(i, j);
 	Vector2 pShadow = p;
 	float rShadow = 10.0f;
@@ -297,6 +307,7 @@ float DuneSediment::IsInShadow(int i, int j, const Vector2& windDir) const
 
 		float step = Height(pShadowSnapped) - hp;
 		float t = (step / d);
+		// Brennen: Update function to match the paper
 		float s = Math::Step(t, tanThresholdAngleWindShadowMin, tanThresholdAngleWindShadowMax);
 		ret = Math::Max(ret, s);
 	}

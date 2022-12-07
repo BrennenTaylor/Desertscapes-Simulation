@@ -27,7 +27,7 @@ int main() {
   DuneSediment dune =
       DuneSediment(Box2D(Vector2(0), Vector2(1024)), 3.0, 5.0, Vector2(0, 3));
 
-  const int numSteps = 1000;
+  const int numSteps = 300;
   // Initial
   dune.ExportJPG("transverse_0.jpg");
   for (int i = 1; i <= numSteps; i++) {
@@ -42,13 +42,20 @@ int main() {
   std::cout << "\n" << std::endl;
 
   //   // Barchan dunes appears under similar wind conditions, but lower sand
-  //   supply. std::cout << "Barchan dunes" << std::endl; dune =
-  //       DuneSediment(Box2D(Vector2(0), Vector2(1024)), 0.5, 2.0, Vector2(5,
-  //       0));
-  //   for (int i = 0; i < 300; i++)
-  //     dune.SimulationStepMultiThreadAtomic();
-  //   dune.ExportJPG("barchan.jpg");
-  //   std::cout << "Done 2/4" << std::endl << std::endl;
+  //   supply.
+  std::cout << "Barchan dunes" << std::endl;
+  dune.ExportJPG("brachan_0.jpg");
+  dune = DuneSediment(Box2D(Vector2(0), Vector2(1024)), 0.5, 2.0, Vector2(0, 5));
+    for (int i = 1; i <= 300; i++) {
+      dune.SimulationStepMultiThreadAtomic();
+        if ((i % 100) == 0) {
+          std::ostringstream ossFilename;
+          ossFilename << "brachan_" << i << ".jpg";
+          dune.ExportJPG(ossFilename.str());
+          std::cout << "\r" << float(i) / numSteps * 100 << "\% done!";
+        }
+    }
+    std::cout << "\n" << std::endl;
 
   //   // Yardangs are created by abrasion, activated with a specific flag in
   //   our
